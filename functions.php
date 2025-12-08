@@ -66,10 +66,10 @@ function cpy_register_works() {
         'public'              => true,               // 公開ページとして表示される
         'show_in_rest'        => true,               // ブロックエディタ有効
         'has_archive'         => true,               // アーカイブ機能を有効（/works で一覧表示）
-        'hierarchical'        => true,
+        'hierarchical'        => false,
         'rewrite'             => ['slug' => 'works', 'with_front' => true],
         'menu_position'       => 5,                  // 管理画面の並び順
-        'supports'            => ['title', 'editor', 'thumbnail'], // 投稿で使える機能
+        'supports' => ['title', 'editor', 'thumbnail', 'page-attributes'], // 投稿で使える機能
     ];
     register_post_type('works', $args);
 }
@@ -200,12 +200,15 @@ add_action('wp_enqueue_scripts', 'uyokyokusetsu_enqueue_copy_code_assets');
 // ==============================
 // resposive.css スマホ対応（レスポンシブデザイン）専用の CSS
 // ==============================
-wp_enqueue_style(
-  'responsive',
-  get_template_directory_uri() . '/css/responsive.css',
-  array('style'),
-  '1.0.0'
-);
+function theme_responsive_css() {
+    wp_enqueue_style(
+        'responsive',
+        get_template_directory_uri() . '/css/responsive.css',
+        array(),
+        '1.0.0'
+    );
+}
+add_action('wp_enqueue_scripts', 'theme_responsive_css');
 
 
 
