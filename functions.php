@@ -51,29 +51,143 @@ function news_posts_per_page($query) {
 }
 add_action('pre_get_posts', 'news_posts_per_page');
 
+
+
+
+
+
+
 // ------------------------------------------
-// カスタム投稿タイプ「works」（技術ブログ一覧）を登録
+// カスタム投稿タイプ「works」（技術ブログ）をつくる
 // ------------------------------------------
-// 管理画面の「投稿」→「works」として表示され、/works にアクセス可能
+// ★これを使うと、WordPress に “投稿・固定ページ” 以外の
+//   新しい記事の種類を追加できる。
+// ★ここでは「技術記事だけを入れる箱（works）」を作る。
+
+// 追加説明①：cpy_register_works の細かい意味
+// ● cpy → あなたのテーマの頭文字（prefix）
+//          「他の人の関数名とぶつけないための名前タグ」
+// ● register → WordPress に「登録してね」とお願いする意味
+// ● works → 新しく作る投稿タイプのID（技術ブログ専用の箱）
+// → つまり関数名全体の意味は『cpyテーマで "works" を登録する先生』
+
+
+// ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+// ▼▼▼▼▼▼▼▼▼▼▼▼▼ 使用者（あなた）視点での動く順番 ▼▼▼▼▼▼▼▼▼▼▼▼▼
+// ① WordPress が起動する
+// ② init というタイミングが来る
+// ③ add_action が「cpy_register_works 呼んで！」と WordPress に伝える
+// ④ cpy_register_works 関数が呼ばれる
+// ⑤ $labels（表示名）を設定する
+// ⑥ $args（動きのルール）を設定する
+// ⑦ register_post_type() で "works" を WP に登録する
+// ⑧ WP ダッシュボード左側に「技術ブログ一覧」というメニューが追加される
+// ⑨ /works で一覧ページが使えるようになる
+// ⑩ 投稿とは別の “技術ブログ専用の箱” が完成
+// ▲▲▲▲▲▲▲▲▲▲▲▲▲ 使用者視点の流れを完全理解 ▲▲▲▲▲▲▲▲▲▲▲▲▲
+// ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+
 function cpy_register_works() {
+
+    // ▼投稿タイプの名前（ラベル）をまとめたもの
+    //   ※ブログの管理画面に表示される文字。
     $labels = [
-        'singular_name' => 'tech',   // 管理画面などで表示される名前
-        'edit_name'     => 'tech',
+        'singular_name' => 'tech',   // 1記事の名前 → 技術記事
+        'edit_name'     => 'tech',   // 編集画面の名前
     ];
+
+    // ▼ここでテスト：ラベル名の変更による変化を学習できる
+    // ▼変更してダッシュボードでどう変わるか試せるテスト案
+    //   'singular_name' => 'recipe',（レシピ）
+    //   'singular_name' => 'work',（作品）
+    //   'singular_name' => 'memo',（メモ）
+    //   管理画面の「投稿名」の表示が変わります。
+
+
+    // ▼投稿タイプの設定（とても大事な部分）
     $args = [
+
+        // 管理画面のメニューに表示されるタイトル
         'label'               => '技術ブログ一覧',
+
+        // ▼②テスト：menu名を変えて、ダッシュボードがどう変わるか試せる
+        // 例：
+        // 'label' => 'レシピ倉庫',
+        // 'label' => '作品ひきだし',
+        // 'label' => 'なんでもノート',
+        // → ダッシュボード左メニューの文字が変わる！
+
+
+        // 管理画面の細かい名前の設定
         'labels'              => $labels,
-        'public'              => true,               // 公開ページとして表示される
-        'show_in_rest'        => true,               // ブロックエディタ有効
-        'has_archive'         => true,               // アーカイブ機能を有効（/works で一覧表示）
+
+        // ↓ここからが「wordpressでどんな動きをするか」の設定
+
+        // ① public：公開する？（true → 公開。一般の人も見られる）
+        'public'              => true,
+
+        // ② show_in_rest：ブロックエディタを使う？（true → 使える）
+        'show_in_rest'        => true,
+
+        // ③ has_archive：一覧ページを作る？
+        //     true にすると /works で一覧ページが作られる
+        'has_archive'         => true,
+
+        // ④ hierarchical：階層構造？（true→親子関係を作れる）
+        //    技術ブログは普通の投稿と同じなので false（親子不要）
         'hierarchical'        => false,
-        'rewrite'             => ['slug' => 'works', 'with_front' => true],
-        'menu_position'       => 5,                  // 管理画面の並び順
-        'supports' => ['title', 'editor', 'thumbnail', 'page-attributes'], // 投稿で使える機能
+
+        // ⑤ rewrite：URLのルール
+        //    'slug' => 'works'
+        //    → URL が /works/◯◯◯ になるように指定
+        'rewrite'             => [
+            'slug' => 'works',       // スラッグ名（URLの文字）
+            'with_front' => true     // /works の前に /blog を付けるか？ → true
+        ],
+
+        // ▼②テスト：URLの文字も変えて、実際のURLがどう変わるか学習できる
+        // 'slug' => 'techblog',
+        // 'slug' => 'portfolio',
+        // → /techblog や /portfolio に変わる
+
+        // ⑥ menu_position：管理画面での表示位置
+        //    5は “投稿” のすぐ下あたり
+        'menu_position'       => 5,
+
+        // ⑦ can_export：エクスポート可能？ → true（OK）
+        'can_export'          => true,
+
+        // ⑧ supports：記事編集で使える機能の種類
+        //    title → タイトル
+        //    editor → 本文
+        //    thumbnail → アイキャッチ
+        //    page-attributes → 並び替え用（menu_order）
+        'supports' => [
+            'title',
+            'editor',
+            'thumbnail',
+            'page-attributes'
+        ],
     ];
+
+    // ▼WordPress に「新しい投稿タイプ works を作ってね」と登録する
     register_post_type('works', $args);
 }
+
+// ▼WordPress が起動したとき（initタイミング）に
+//   上のカスタム投稿タイプを読み込むようにする
 add_action('init', 'cpy_register_works');
+
+
+
+
+
+
+
+
+
+
 
 // ------------------------------------------
 // 技術ブログ（works）投稿タイプのアーカイブページで
@@ -216,7 +330,7 @@ add_action('wp_enqueue_scripts', 'theme_responsive_css');
 //includes(functions.phpの記載を分担させるための、php機能ファイルの入ったフォルダ)を読み込む
 // ==============================
 require_once get_template_directory() . '/includes/enqueue.php';
-require_once get_template_directory() . '/includes/theme-setup.php';
+require_once get_template_directory() . '/includes/theme-setup.php';//includesフォルダのtheme-setup.php を読み込む
 
 
 
